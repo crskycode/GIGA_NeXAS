@@ -35,7 +35,7 @@ int main(int argc, char** argv)
         printf("Usage:\n");
         printf("  Create Package  : Tool -c <no|zlib|zstd> <package.pac> <path/to/folder> [CP_ACP|CP_UTF8]\n");
         printf("  Extract Package : Tool -x <package.pac> <path/to/folder> [CP_ACP|CP_UTF8]\n");
-        printf("  Default CodePage is CP_ACP\n");
+        printf("  Default CodePage is CP_ACP (Encoding : shift_jis)\n");
         return 1;
     }
 

@@ -5,13 +5,13 @@
 #include <list>
 #include <algorithm>
 
-void HuffmanEncoder::SetBits(std::vector<uint8_t>& buffer,uint32_t setBit,uint32_t setValue)
+void HuffmanEncoder::SetBits(std::vector<uint8_t> &buffer, uint32_t setBit, uint32_t setValue)
 {
     uint32_t writeBit = 0;
 
-    while(setBit > 0)
+    while (setBit > 0)
     {
-        if(!this->_bitCount)
+        if (!this->_bitCount)
         {
             buffer.emplace_back(this->_curValue);
             this->_bitCount = 8;
@@ -19,35 +19,32 @@ void HuffmanEncoder::SetBits(std::vector<uint8_t>& buffer,uint32_t setBit,uint32
         }
 
         writeBit = this->_bitCount < setBit ? this->_bitCount : setBit;
-        
-        if(this->_bitCount < setBit)
-        {
-            this->_curValue |= (setValue>>(setBit-this->_bitCount));
-            setValue &= (1<<(setBit-this->_bitCount)) -1 ; 
-        }
-        else
-        {
-            this->_curValue |= (setValue << (this->_bitCount-setBit));
-        }
 
-        setBit-= writeBit;
-        this->_bitCount-= writeBit;
+        uint32_t mask = (1 << writeBit) - 1;
 
+        uint32_t writeBitValue = (setValue >> (setBit - writeBit)) & mask;
+
+        this->_curValue |= writeBitValue << (this->_bitCount - writeBit);
+
+        setBit -= writeBit;
+        this->_bitCount -= writeBit;
     }
 }
 
 void HuffmanEncoder::ParseHuffmanTreeToBitStream(std::vector<uint8_t> &streamBuffer, const std::shared_ptr<HuffmanNode> &node)
 {
-    if(node->leftNode==nullptr && node->rightNode==nullptr)
+    if (node->leftNode == nullptr && node->rightNode == nullptr)
     {
-        this->SetBits(streamBuffer,1,0);
-        this->SetBits(streamBuffer,8,node->symbol);
+        this->SetBits(streamBuffer, 1, 0);
+        this->SetBits(streamBuffer, 8, node->symbol);
     }
     else
     {
-        this->SetBits(streamBuffer,1,1);
-        if(node->leftNode!=nullptr) this->ParseHuffmanTreeToBitStream(streamBuffer,node->leftNode); 
-        if(node->rightNode!=nullptr) this->ParseHuffmanTreeToBitStream(streamBuffer,node->rightNode);
+        this->SetBits(streamBuffer, 1, 1);
+        if (node->leftNode != nullptr)
+            this->ParseHuffmanTreeToBitStream(streamBuffer, node->leftNode);
+        if (node->rightNode != nullptr)
+            this->ParseHuffmanTreeToBitStream(streamBuffer, node->rightNode);
     }
 }
 
@@ -139,18 +136,20 @@ std::vector<uint8_t> HuffmanEncoder::Encode(uint8_t *const buffer, uint32_t buff
 
     encodedBuffer.reserve(bufferSize);
 
-    this->ParseHuffmanTreeToBitStream(encodedBuffer,this->_root);
+    this->ParseHuffmanTreeToBitStream(encodedBuffer, this->_root);
 
-    for(uint32_t i =0;i<bufferSize;i++)
+    for (uint32_t i = 0; i < bufferSize; i++)
     {
         uint8_t c = buffer[i];
 
         auto node = nodeMap[c];
 
-        for(const auto& val : node->path) this->SetBits(encodedBuffer,1,val);
+        for (const auto &val : node->path)
+            this->SetBits(encodedBuffer, 1, val);
     }
 
-    if(this->_bitCount) encodedBuffer.emplace_back(this->_curValue);
+    if (this->_bitCount != 8)
+        encodedBuffer.emplace_back(this->_curValue);
 
     return encodedBuffer;
 }
